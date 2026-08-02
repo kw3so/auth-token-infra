@@ -1,10 +1,10 @@
 import "dotenv/config";
-import app from "./app";
+import app from "./app.js";
 
 const PORT = process.env.PORT || 3003;
 const SHUTDOWN_TIMEOUT_MS = 10000;
-let server;
 
+let server;
 let isShuttingDown = false;
 //Start server function
 const startServer = () => {
@@ -19,7 +19,7 @@ const startServer = () => {
 const shutdown = (signal, exitCode = 0) => {
   if (isShuttingDown) return;
   isShuttingDown = true;
-  console.log(`${signal} received - Serve shutting down`);
+  console.log(`${signal} received - Server shutting down`);
 
   const forceShutDown = setTimeout(() => {
     console.error("Graceful exit timed out - forcing shutdown");
@@ -46,12 +46,12 @@ const shutdown = (signal, exitCode = 0) => {
 
 // Handle gracefully shutdown
 process.on("unhandledRejection", (err) => {
-  console.err(`unhandled rejection: ${err.message}`);
+  console.error(`unhandled rejection: ${err.message}`);
   shutdown("unhandledRejection", 1);
 });
 
 process.on("uncaughtException", (err) => {
-  console.err(`uncaught exception: ${err.message}`);
+  console.error(`uncaught exception: ${err.message}`);
   shutdown("uncaughtException", 1);
 });
 
@@ -59,7 +59,8 @@ process.on("uncaughtException", (err) => {
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
-startServer().catch((err) => {
-  console.error(`Failed to start to server: ${err.message}`);
-  shutdown("failed-start", 1);
-});
+startServer()
+// .catch((err) => { to add when the start handles a promise - prisma connection.
+//   console.error(`Failed to start to server: ${err.message}`);
+//   shutdown("failed-start", 1);
+// });
