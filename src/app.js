@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/auth.routes.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 //use middleware
@@ -21,5 +22,8 @@ app.use(cookieParser());
 //auth
 app.use("/api/auth", authRoutes);
 //users
+
+//Error handler
+app.use(errorHandler);
 
 export default app;
