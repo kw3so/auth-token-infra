@@ -7,3 +7,6 @@ coverage/
 yarn.lock
 ./generated/prisma
 request.rest
+/src/generated/prisma
+prisma/generated
+prisma/migrations

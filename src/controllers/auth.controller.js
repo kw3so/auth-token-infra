@@ -1,4 +1,4 @@
-import { ValidationError } from "../errors/ValidationError.js";
+import { ValidationError } from "../errors/auth.errors.js";
 
 export const registerController = (req, res) => {
   const { username, phoneNumber, email, password } = req.body;
