@@ -1,42 +1,33 @@
 import { ConflictError, ValidationError } from "../errors/auth.errors.js";
 import { prisma } from "../config/db.js";
 import bcrypt from "bcrypt";
-import { findByEmailOrName } from "../prismaRepo/user.repository.js";
+import {
+  createUser,
+  findByEmailOrName,
+} from "../prismaRepo/user.repository.js";
+import { hashPassword } from "../utils/password.utils.js";
+import { registerService } from "../services/auth.service.js";
 
-export const registerController = async (req, res) => {
-  const { username, phoneNumber, email, password } = req.body;
+export const registerController = async (req, res, next) => {
+  try {
+    const { username, phoneNumber, email, password } = req.body;
 
-  if (!username || !email || !password) {
-    throw new ValidationError("Provide all required fields");
-  }
+    if (!username || !email || !password) {
+      throw new ValidationError("Provide all required fields");
+    }
 
-  // res.status(200).json({ username });
-  //registerService
-  //check if user already exists
-  const userExists = await findByEmailOrName(username, email)
-  if (userExists) {
-    throw new ConflictError("Username or email is already in use.");
-  }
-  //- hash the password
-  const hashPassword = await bcrypt.hash(password, 12);
-  //- build the user in db
-  const user = await prisma.user.create({
-    data: {
+    // res.status(200).json({ username });
+    //registerService
+    //check if user already exists
+    const {user}  = await registerService(
       username,
+      phoneNumber,
       email,
-      password: hashPassword,
-    },
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      createdAt: true,
-    },
-  });
-  //-
-  return res.status(201).json({
-    data: {
-      user,
-    },
-  });
+      password,
+    );
+    console.log("controler:", user);
+    res.status(201).json({user});
+  } catch (err) {
+    next(err);
+  }
 };

@@ -14,7 +14,7 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   username    String   @unique
-  phoneNumber Int?
+  phoneNumber String?
 
   @@map("users")
 }
