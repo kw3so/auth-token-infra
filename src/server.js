@@ -1,6 +1,6 @@
 import "dotenv/config";
 import app from "./app.js";
-import { connectDB, disconnectDB } from "./config/db.js";
+import { connectDB, disconnectDB, prisma } from "./config/db.js";
 
 const PORT = process.env.PORT || 3003;
 const SHUTDOWN_TIMEOUT_MS = 10000;
@@ -9,10 +9,10 @@ let server;
 let isShuttingDown = false;
 //Start server function
 const startServer = async () => {
-  //Connect the db here
-  await connectDB;
 
-  app.listen(PORT, () => {
+  await connectDB();
+
+  server = app.listen(PORT, () => {
     console.log(`The server has started at ${PORT}`);
   });
 };
@@ -37,7 +37,7 @@ const shutdown = async (signal, exitCode = 0) => {
         console.error(`Failed to shutdown server ${err.message}`);
       }
       //disconnectDB
-      await disconnectDB;
+      await disconnectDB();
       clearTimeout(forceShutDown);
       process.exit(exitCode);
     });
@@ -59,11 +59,8 @@ process.on("uncaughtException", (err) => {
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
-startServer().catch((err) => {
+startServer().catch(async (err) => {
   console.error("Failed to start server", err);
-  
+  await disconnectDB();
+  shutdown("Failed start", 1);
 });
-// .catch((err) => { to add when the start handles a promise - prisma connection.
-//   console.error(`Failed to start to server: ${err.message}`);
-//   shutdown("failed-start", 1);
-// });
