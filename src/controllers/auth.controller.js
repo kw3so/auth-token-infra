@@ -1,6 +1,7 @@
 import { ConflictError, ValidationError } from "../errors/auth.errors.js";
 import { prisma } from "../config/db.js";
 import bcrypt from "bcrypt";
+import { findByEmailOrName } from "../prismaRepo/user.repository.js";
 
 export const registerController = async (req, res) => {
   const { username, phoneNumber, email, password } = req.body;
@@ -12,14 +13,9 @@ export const registerController = async (req, res) => {
   // res.status(200).json({ username });
   //registerService
   //check if user already exists
-  const userExists = await prisma.user.findFirst({
-    where: {
-      OR: [{ username }, { email }],
-      // email
-    },
-  });
+  const userExists = await findByEmailOrName(username, email)
   if (userExists) {
-    throw new ConflictError("Username or password is already in use.");
+    throw new ConflictError("Username or email is already in use.");
   }
   //- hash the password
   const hashPassword = await bcrypt.hash(password, 12);
