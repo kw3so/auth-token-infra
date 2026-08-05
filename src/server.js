@@ -23,12 +23,12 @@ const shutdown = async (signal, exitCode = 0) => {
   isShuttingDown = true;
   console.log(`${signal} received - Server shutting down`);
 
-  const forceShutDown = setTimeout(() => {
-    console.error("Graceful exit timed out - forcing shutdown");
-
-    process.exit(1);
-  }, SHUTDOWN_TIMEOUT_MS);
-  forceShutDown.unref();
+  // const forceShutDown = setTimeout(async() => {
+  //   console.error("Graceful exit timed out - forcing shutdown");
+  //   await disconnectDB()
+  //   process.exit(1);
+  // }, SHUTDOWN_TIMEOUT_MS);
+  // forceShutDown.unref();
 
   if (server) {
     //If server is open don't accept any connections
@@ -38,10 +38,10 @@ const shutdown = async (signal, exitCode = 0) => {
       }
       //disconnectDB
       await disconnectDB();
-      clearTimeout(forceShutDown);
+      // clearTimeout(forceShutDown);
       process.exit(exitCode);
     });
-  }
+  } 
 };
 
 // Handle gracefully shutdown
