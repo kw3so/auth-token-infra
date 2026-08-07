@@ -1,9 +1,11 @@
-import { ConflictError } from "../errors/auth.errors.js";
+import jwt from "jsonwebtoken";
+import { ConflictError, UnauthorizedError } from "../errors/auth.errors.js";
 import {
   createUser,
+  findByEmail,
   findByEmailOrName,
 } from "../prismaRepo/user.repository.js";
-import { hashPassword } from "../utils/password.utils.js";
+import { comparePassword, hashPassword } from "../utils/password.utils.js";
 
 export const registerService = async (
   username,
@@ -24,6 +26,33 @@ export const registerService = async (
     email,
     password: passwordHashed,
   });
-console.log("service:", user);
   return { user };
+};
+
+export const loginService = async (email, password) => {
+  const userExist = await findByEmail(email);
+  if (!userExist) {
+    throw new UnauthorizedError("Invalid email or password");
+  }
+  const passwordMatches = await comparePassword(password, userExist.password);
+
+  if (!passwordMatches) {
+    throw new UnauthorizedError("Invalid email or password");
+  }
+  const { password: _pw, ...user } = userExist;
+  const accessToken = await issueTokenPairFor(user);
+
+  return { user, accessToken };
+};
+
+//Issue tokens for a freshly successfully auth/registered user
+const issueTokenPairFor = (user) => {
+  //Access token
+  const generateToken = jwt.sign(
+    { sub: user.id, name: user.username },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: process.env.ACCESS_EXPIRES_IN },
+  );
+
+  return generateToken;
 };

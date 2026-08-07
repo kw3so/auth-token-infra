@@ -10,8 +10,8 @@ import {
   findByEmail,
   findByEmailOrName,
 } from "../prismaRepo/user.repository.js";
-import { hashPassword } from "../utils/password.utils.js";
-import { registerService } from "../services/auth.service.js";
+import { comparePassword, hashPassword } from "../utils/password.utils.js";
+import { loginService, registerService } from "../services/auth.service.js";
 
 export const registerController = async (req, res, next) => {
   try {
@@ -30,7 +30,6 @@ export const registerController = async (req, res, next) => {
       email,
       password,
     );
-    console.log("controler:", user);
     res.status(201).json({ user });
   } catch (err) {
     next(err);
@@ -40,16 +39,11 @@ export const registerController = async (req, res, next) => {
 export const loginController = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const userExist = await findByEmail(email);
-    if (!userExist) {
-      throw new UnauthorizedError("Invalid email or password");
+    if (!email || !password) {
+      throw new ValidationError("Provide all required fields");
     }
-    const passwordMatches = await bcrypt.compare(password, userExist.password);
-    if (!passwordMatches) {
-      throw new UnauthorizedError("Invalid email or password");
-    }
-    const {password:_pw, ...safeUser} = userExist;
-    res.status(200).json({safeUser})
+    const user = await loginService(email, password);
+    res.status(200).json({ user });
   } catch (err) {
     next(err);
   }
