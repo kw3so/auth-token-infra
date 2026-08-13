@@ -1,11 +1,13 @@
 {
   "name": "authV1",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "src/server.js",
   "author": "kwes0 <jacqueskamau@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "test": "jest --runInBand",
+    "start": "node src/server.js"
   },
   "type": "module",
   "dependencies": {
@@ -14,7 +16,6 @@
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
-    "crypto": "^1.0.1",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.6.1",
@@ -22,7 +23,14 @@
     "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
+    "jest": "^30.4.2",
     "nodemon": "^3.1.14",
     "prisma": "^7.9.1"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/tests/setup/testEnv.js"
+    ]
   }
 }
