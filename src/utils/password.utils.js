@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 
-const SALT_ROUNDS = 12;
+const SALT_ROUNDS = process.env.SALT_ROUNDS;
 
 export const hashPassword = async (plainTextPassword) => {
   return await bcrypt.hash(plainTextPassword, SALT_ROUNDS);

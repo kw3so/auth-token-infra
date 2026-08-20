@@ -66,7 +66,6 @@ export const refreshController = async (req, res, next) => {
   try {
     const incomingToken = req.cookies.refreshToken;
 
-    console.log(incomingToken);
     if (!incomingToken) {
       throw new ValidationError("Refresh token missing");
     }
@@ -82,7 +81,6 @@ export const refreshController = async (req, res, next) => {
 export const logoutController = async (req, res, next) => {
   try {
     const incomingToken = req.cookies.refreshToken;
-    console.log(incomingToken);
     if (incomingToken) {
       await logoutService(incomingToken);
     }

@@ -10,3 +10,4 @@ request.rest
 /src/generated/prisma
 prisma/generated
 prisma/migrations
+.jest-cache/

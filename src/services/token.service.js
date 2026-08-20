@@ -16,13 +16,13 @@ import {
 import { ForbiddenError, UnauthorizedError } from "../errors/auth.errors.js";
 
 export const generateAccessToken = ({ userId, username }) => {
-  const accessExpiryIn = parseInt(process.env.ACCESS_EXPIRES_IN, 10);
-  const accessExpiryInMs = accessExpiryIn * 60;
+  const accessExpiryInSec = parseInt(process.env.ACCESS_EXPIRES_IN, 10) * 60;
+  console.log(accessExpiryInSec);
   //Access token
   const accessToken = jwt.sign(
     { sub: userId, name: username },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: accessExpiryInMs },
+    { expiresIn: accessExpiryInSec },
   );
 
   return accessToken;
@@ -85,14 +85,14 @@ export const rotateRefreshToken = async (rawToken) => {
   //Write a new refresh token Hash
   const newRawToken = generateRawToken();
   //Hash the new raw token
-  const newTokenHash = generateTokenHash(newRawToken);
+  const newRawTokenHash = generateTokenHash(newRawToken);
   // Create a new expiry
   const newExpiryAt = new Date(
     Date.now() + refreshExpiration * 24 * 60 * 60 * 1000,
   );
   //Store the new token hash
   await createRefreshToken({
-    tokenHash: newTokenHash,
+    tokenHash: newRawTokenHash,
     userId: existingTokenHash.userId,
     familyId: existingTokenHash.familyId,
     expiresAt: newExpiryAt,
@@ -100,7 +100,7 @@ export const rotateRefreshToken = async (rawToken) => {
   });
 
   //Update the revoked and replacedBy values in the DB to show that they have been swapped and updated
-  await markRotated(rawTokenHash, newRawToken);
+  await markRotated(rawTokenHash, newRawTokenHash);
   //return the newToken and userId attached to it
   return { rawToken: newRawToken, userId: existingTokenHash.userId };
 };
