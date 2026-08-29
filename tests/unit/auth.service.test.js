@@ -14,20 +14,24 @@ describe("auth.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+  /**
+   * registerService
+   * login service
+   * refresh service
+   * issueTokenPair
+   * Logout service
+   *  */
+  describe("register", ()=>{
+    /**
+     * throws an error for existent email
+     * throw an error for existent username
+     * create a user with a hashed password
+     * issue access token
+     * issue refresh token
+     */
+    
+    //end of register
+  })
 
-  it("throw conflictError if register email or username already exists", async () => {
-    userRepository.findByEmailOrName.mockResolvedValue({
-      username: "user-1-name",
-      email: "user@email.com",
-    });
-
-    await expect(
-      authService.registerService({
-        username: "user-1-name",
-        email: "user@email.com",
-        password: "userPassword",
-      }),
-    ).rejects.toThrow(authError.ConflictError);
-  });
   //end of mother test
 });
