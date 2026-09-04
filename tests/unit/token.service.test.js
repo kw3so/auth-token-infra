@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import * as refreshTokenRepository from "../../src/repositories/refreshtoken.repository.js";
 import * as tokenService from "../../src/services/token.service.js";
 import * as authError from "../../src/errors/auth.errors.js";
+import * as cryptoUtils from "../../src/utils/crypto.utils.js";
 
 vi.mock("../../src/repositories/refreshtoken.repository.js", () => ({
   createRefreshToken: vi.fn(),
@@ -23,6 +24,7 @@ describe("token.service tests", () => {
   describe("issueRefreshToken", () => {
     //Using it, in the callback we can then compare output to what we expect
     it("creates a token record and returns a raw token string", async () => {
+      //Service doesn't use the created record, only its own generated hash.
       refreshTokenRepository.createRefreshToken.mockResolvedValue({});
       const userId = "user-id-1";
       //Call function issueRefreshToken
@@ -42,9 +44,9 @@ describe("token.service tests", () => {
   });
   //Test the rofreshToken part
   describe("rotateRefreshToken", () => {
-    it("throws unauthorized if a token is not passed", async () => {
+    it("throws unauthorized if token not found", async () => {
       refreshTokenRepository.findByHash.mockResolvedValue(null);
-      const notRawToken = "notOurAuthedToken";
+      const notRawToken = "unauthedToken";
       await expect(
         tokenService.rotateRefreshToken(notRawToken),
       ).rejects.toThrow(authError.UnauthorizedError);
@@ -52,10 +54,9 @@ describe("token.service tests", () => {
     });
     it("throws Unauthorized when the token is expired", async () => {
       refreshTokenRepository.findByHash.mockResolvedValue({
-        revoked: false,
-        expiresAt: new Date(Date.now() - 1000),
-        familyId: "family-id-1",
-        userId: "user-1",
+
+        expiresAt: new Date(Date.now() - 1000), //For this test we only need expiresAt as our resolvedValue and to be less than now
+
       });
 
       await expect(
@@ -65,9 +66,7 @@ describe("token.service tests", () => {
     it("revokes the whole family and throws ForbiddenError on reuse of a revoked token", async () => {
       refreshTokenRepository.findByHash.mockResolvedValue({
         revoked: true,
-        expiresAt: new Date(Date.now() + 1000),
-        familyId: "family-id-1",
-        userId: "user-id-1",
+        familyId: "family-id-1"
       });
       await expect(
         tokenService.rotateRefreshToken("revoked-token"),
@@ -90,11 +89,15 @@ describe("token.service tests", () => {
       //I want to check args pased into createRefreshToken because is where the new hashed token should be stored. We always store a tokenHash.
 
       const result = await tokenService.rotateRefreshToken("valid-token");
+      const hashToken = cryptoUtils.generateTokenHash("valid-token")
 
       expect(result.userId).toBe("user-id-1");
       expect(typeof result.rawToken).toBe("string");
       expect(refreshTokenRepository.markRotated).toHaveBeenCalledTimes(1);
-      expect(refreshTokenRepository.markRotated).toHaveBeenCalledTimes(1);
+      expect(refreshTokenRepository.markRotated).not.toHaveBeenCalledWith(
+        hashToken
+      ); //it is supposed to be newer
+      //Test - Assertion markRotated was called with the old token's identifier.
 
       const createTokenArgs =
         refreshTokenRepository.createRefreshToken.mock.calls[0][0];
@@ -123,18 +126,20 @@ describe("token.service tests", () => {
   });
   describe("verifyAccessToken", () => {
     it("throws an UnauthorizedError if the token is invalid", () => {
-      //Using toThrow requires to be wrapped. For that the function either needs to be awaited or use the sync throw pattern 
+      //Using toThrow requires to be wrapped. For that the function either needs to be awaited or use the sync throw pattern
       expect(() => tokenService.verifyAccessToken("Invalid token")).toThrow(
         authError.UnauthorizedError,
       );
     });
   });
-  describe("revokeAllUserTokens",()=>{
-    it("revokes all User Tokens across the logins", async()=>{
-      await tokenService.revokeAllUserTokens("user-id")
+  describe("revokeAllUserTokens", () => {
+    it("revokes all User Tokens across the logins", async () => {
+      await tokenService.revokeAllUserTokens("user-id");
 
-      expect(refreshTokenRepository.revokeAllTokensForUser).toHaveBeenCalledTimes(1)
-    })
-  })
+      expect(
+        refreshTokenRepository.revokeAllTokensForUser,
+      ).toHaveBeenCalledTimes(1);
+    });
+  });
   //end of mother test
 });

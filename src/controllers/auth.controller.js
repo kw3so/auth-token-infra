@@ -32,11 +32,11 @@ export const registerController = async (req, res, next) => {
     // res.status(200).json({ username });
     //registerService
     //check if user already exists
-    const { user, accessToken, refreshToken } = await registerService(
+    const { user, accessToken, refreshToken } = await registerService({
       username,
       phoneNumber,
       email,
-      password,
+      password,}
     );
     setRefreshTokenCookie({ res, token: refreshToken });
     res.status(201).json({ user, accessToken });

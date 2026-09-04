@@ -13,13 +13,13 @@ import {
   rotateRefreshToken,
 } from "./token.service.js";
 
-export const registerService = async (
+export const registerService = async ({
   username,
   phoneNumber,
   email,
-  password,
+  password,}
 ) => {
-  const userExists = await findByEmailOrName(username, email);
+  const userExists = await findByEmailOrName({username, email});
   if (userExists) {
     throw new ConflictError("Username or email is already in use.");
   }
@@ -32,8 +32,10 @@ export const registerService = async (
     email,
     password: passwordHashed,
   });
-  const { accessToken, refreshToken } = await issueTokenPairFor(user);
-  return { user, accessToken, refreshToken };
+  // const { accessToken, refreshToken } = await issueTokenPairFor(user);
+  // return { user, accessToken, refreshToken }; 
+  //The above commented code returned the password so we outsourced the solution
+  return issueTokenPairFor(user)
 };
 
 export const loginService = async (email, password) => {
@@ -46,13 +48,17 @@ export const loginService = async (email, password) => {
   if (!passwordMatches) {
     throw new UnauthorizedError("Invalid email or password");
   }
-  const { password: _pw, ...user } = userExist;
-  const { accessToken, refreshToken } = await issueTokenPairFor(user);
+  // const { password: _pw, ...user } = userExist;
+  // const { accessToken, refreshToken } = await issueTokenPairFor(user);
 
-  return { user, accessToken, refreshToken };
+  // return { user, accessToken, refreshToken };
+  return issueTokenPairFor(userExist)
 };
 
 export const refreshService = async (rawRefreshToken) => {
+  if(!rawRefreshToken){
+    throw new UnauthorizedError('Invalid token or token not present')
+  }
   const { rawToken, userId } = await rotateRefreshToken(rawRefreshToken);
   const user = await findById(userId);
   const accessToken = generateAccessToken({
@@ -75,5 +81,9 @@ const issueTokenPairFor = async (user) => {
 
   //Refresh token
   const refreshToken = await issueRefreshToken(user.id);
-  return { accessToken, refreshToken };
+
+  //get safeUser
+  const {password: _pw, ...safeUser} = user
+
+  return { user: safeUser, accessToken, refreshToken };
 };

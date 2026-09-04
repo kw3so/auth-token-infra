@@ -17,7 +17,6 @@ import { ForbiddenError, UnauthorizedError } from "../errors/auth.errors.js";
 
 export const generateAccessToken = ({ userId, username }) => {
   const accessExpiryInSec = parseInt(process.env.ACCESS_EXPIRES_IN, 10) * 60;
-  console.log(accessExpiryInSec);
   //Access token
   const accessToken = jwt.sign(
     { sub: userId, name: username },
