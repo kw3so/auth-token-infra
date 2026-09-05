@@ -1,6 +1,6 @@
 import { prisma } from "../config/db.js";
 
-export const findByEmailOrName = async ({username, email}) => {
+export const findByEmailOrName = async ({ username, email }) => {
   return await prisma.user.findFirst({
     where: {
       OR: [{ username }, { email }],
@@ -61,6 +61,16 @@ export const findById = async (userId) => {
     select: {
       id: true,
       username: true,
+    },
+  });
+};
+
+//Update password - reset password
+export const updatePassword = async ({ userId, newPasswordHash }) => {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: {
+      password: newPasswordHash,
     },
   });
 };
