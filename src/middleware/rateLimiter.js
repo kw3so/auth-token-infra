@@ -1,5 +1,5 @@
 import rateLimit from "express-rate-limit";
-import { TooManyRequestsError } from "../errors/auth.errors";
+import { TooManyRequestsError } from "../errors/auth.errors.js";
 
 
 
