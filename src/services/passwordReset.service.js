@@ -1,8 +1,9 @@
-import * as passwordResetTokenRepository from "../repositories/passwordResetToken.repository";
-import * as userRepository from "../repositories/user.repository";
-import * as cryptoUtils from "../utils/crypto.utils";
-import * as AuthError from "../errors/auth.errors";
-import { revokeAllTokensForUser } from "../repositories/refreshtoken.repository";
+import * as passwordResetTokenRepository from "../repositories/passwordResetToken.repository.js";
+import * as userRepository from "../repositories/user.repository.js";
+import * as cryptoUtils from "../utils/crypto.utils.js";
+import * as AuthError from "../errors/auth.errors.js";
+import { revokeAllTokensForUser } from "../repositories/refreshtoken.repository.js";
+
 export const requestPasswordReset = async (email) => {
   const passwordResetExpiresInMin = parseInt(
     process.env.PASSWORD_RESET_EXPIRES_IN_MINUTES,
