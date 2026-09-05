@@ -1,7 +1,8 @@
 import * as passwordResetTokenRepository from "../repositories/passwordResetToken.repository";
 import * as userRepository from "../repositories/user.repository";
 import * as cryptoUtils from "../utils/crypto.utils";
-
+import * as AuthError from "../errors/auth.errors";
+import { revokeAllTokensForUser } from "../repositories/refreshtoken.repository";
 export const requestPasswordReset = async (email) => {
   const passwordResetExpiresInMin = parseInt(
     process.env.PASSWORD_RESET_EXPIRES_IN_MINUTES,
@@ -20,7 +21,7 @@ export const requestPasswordReset = async (email) => {
   //gen a raw token
   const rawToken = cryptoUtils.generateRawToken();
   // Hash token
-  const rawTokenHash = cryptoUtils.generateTokenHash(rawToken);
+  const rawTokenHash = await cryptoUtils.generateTokenHash(rawToken);
   //expires in
   const expiresAt = new Date(
     Date.now() + passwordResetExpiresInMin * 60 * 1000,
@@ -38,4 +39,26 @@ export const requestPasswordReset = async (email) => {
   console.log(user.email, resetUrl); //A service to send the email
 };
 
-export const resetPassword = async (rawToken, newPassword) => {};
+export const resetPassword = async ({ rawToken, newPassword }) => {
+  const rawTokenHash = await cryptoUtils.generateTokenHash(rawToken);
+  const existingRawToken =
+    await passwordResetTokenRepository.findByHash(rawTokenHash);
+
+  if (
+    !existingRawToken ||
+    existingRawToken.used ||
+    existingRawToken.expiresAt < new Date()
+  ) {
+    throw new AuthError.UnauthorizedError(
+      " Invalid or expired password reset token",
+    );
+  }
+
+  //Update user password and mark token as used
+  const newPasswordHash = await cryptoUtils.generateTokenHash(newPassword);
+  await userRepository.updatePassword(existingRawToken.userId, newPasswordHash);
+  await passwordResetTokenRepository.markUsed(rawTokenHash);
+
+  //Revoke all tokens after user resets password
+  await revokeAllTokensForUser(existingRawToken.userId);
+};

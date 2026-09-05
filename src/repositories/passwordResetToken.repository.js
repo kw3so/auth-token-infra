@@ -8,7 +8,8 @@ export const create = async ({ tokenHash, userId, expiresAt }) => {
 
 export const findByHash = async (tokenHash) => {
   return await prisma.passwordResetToken.findUnique({
-    where: tokenHash,
+    where: { tokenHash },
+    select: { userId: true },
   });
 };
 

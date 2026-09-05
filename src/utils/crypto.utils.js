@@ -7,9 +7,9 @@ export const generateRawToken = () => {
 
 export const generateTokenHash = (rawToken) => {
   const pepper = process.env.REFRESH_TOKEN_PEPPER;
-  if (!rawToken) {
-    throw new AuthError.ValidationError("Not authenticated")
-  }
+  // if (!rawToken) {
+  //   throw new AuthError.ValidationError("No token present")
+  // }
   return crypto.createHmac("sha256", pepper).update(rawToken).digest("hex");
 };
 
