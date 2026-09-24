@@ -14,14 +14,16 @@ import {
 } from "../utils/crypto.utils.js";
 
 import { ForbiddenError, UnauthorizedError } from "../errors/auth.errors.js";
+import * as ConfigEnv from "../config/config.env.js";
 
 export const generateAccessToken = ({ userId, username }) => {
-  const accessExpiryInSec = parseInt(process.env.ACCESS_EXPIRES_IN, 10) * 60;
+  const ACCESS_TOKEN_TTL_SEC = ConfigEnv.ACCESS_TOKEN_TTL_MINUTES * 60;
+
   //Access token
   const accessToken = jwt.sign(
     { sub: userId, name: username },
-    process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: accessExpiryInSec },
+    ConfigEnv.ACCESS_TOKEN_SECRET,
+    { expiresIn: ACCESS_TOKEN_TTL_SEC },
   );
 
   return accessToken;
@@ -29,14 +31,15 @@ export const generateAccessToken = ({ userId, username }) => {
 
 export const verifyAccessToken = (token) => {
   try {
-    return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    return jwt.verify(token, ConfigEnv.ACCESS_TOKEN_SECRET);
   } catch (err) {
     throw new UnauthorizedError("Invalid or expired access token");
   }
 };
 
 export const issueRefreshToken = async (userId) => {
-  const refreshExpiration = parseInt(process.env.REFRESH_EXPIRES_IN, 10);
+  const REFRESH_TOKEN_TTL_MS =
+    ConfigEnv.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000;
   //Token is a random string
   const rawToken = generateRawToken();
 
@@ -44,9 +47,7 @@ export const issueRefreshToken = async (userId) => {
   const rawTokenHash = generateTokenHash(rawToken);
   //This is called only once during the auth session. Grouping purpose
   const familyId = generateRandomUUID();
-  const expiresAt = new Date(
-    Date.now() + refreshExpiration * 24 * 60 * 60 * 1000,
-  );
+  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
 
   //Store the token in db
   await createRefreshToken({
@@ -61,7 +62,9 @@ export const issueRefreshToken = async (userId) => {
 
 export const rotateRefreshToken = async (rawToken) => {
   //env variables
-  const refreshExpiration = parseInt(process.env.REFRESH_EXPIRES_IN, 10);
+  const REFRESH_TOKEN_TTL_MS =
+    ConfigEnv.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000;
+
   //Get the token hash that's stored with the salt
   const rawTokenHash = generateTokenHash(rawToken);
   //Get the rawtoken in the db
@@ -86,9 +89,7 @@ export const rotateRefreshToken = async (rawToken) => {
   //Hash the new raw token
   const newRawTokenHash = generateTokenHash(newRawToken);
   // Create a new expiry
-  const newExpiryAt = new Date(
-    Date.now() + refreshExpiration * 24 * 60 * 60 * 1000,
-  );
+  const newExpiryAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
   //Store the new token hash
   await createRefreshToken({
     tokenHash: newRawTokenHash,

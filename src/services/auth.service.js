@@ -17,9 +17,9 @@ export const registerService = async ({
   username,
   phoneNumber,
   email,
-  password,}
-) => {
-  const userExists = await findByEmailOrName({username, email});
+  password,
+}) => {
+  const userExists = await findByEmailOrName({ username, email });
   if (userExists) {
     throw new ConflictError("Username or email is already in use.");
   }
@@ -33,12 +33,12 @@ export const registerService = async ({
     password: passwordHashed,
   });
   // const { accessToken, refreshToken } = await issueTokenPairFor(user);
-  // return { user, accessToken, refreshToken }; 
+  // return { user, accessToken, refreshToken };
   //The above commented code returned the password so we outsourced the solution
-  return issueTokenPairFor(user)
+  return issueTokenPairFor(user);
 };
 
-export const loginService = async (email, password) => {
+export const loginService = async ({ email, password }) => {
   const userExist = await findByEmail(email);
   if (!userExist) {
     throw new UnauthorizedError("Invalid email or password");
@@ -52,12 +52,12 @@ export const loginService = async (email, password) => {
   // const { accessToken, refreshToken } = await issueTokenPairFor(user);
 
   // return { user, accessToken, refreshToken };
-  return issueTokenPairFor(userExist)
+  return issueTokenPairFor(userExist);
 };
 
 export const refreshService = async (rawRefreshToken) => {
-  if(!rawRefreshToken){
-    throw new UnauthorizedError('Invalid token or token not present')
+  if (!rawRefreshToken) {
+    throw new UnauthorizedError("Invalid token or token not present");
   }
   const { rawToken, userId } = await rotateRefreshToken(rawRefreshToken);
   const user = await findById(userId);
@@ -83,7 +83,7 @@ const issueTokenPairFor = async (user) => {
   const refreshToken = await issueRefreshToken(user.id);
 
   //get safeUser
-  const {password: _pw, ...safeUser} = user
+  const { password: _pw, ...safeUser } = user;
 
   return { user: safeUser, accessToken, refreshToken };
 };

@@ -5,9 +5,12 @@ import * as UserRepository from "../../src/repositories/user.repository.js";
 import * as CryptoUtils from "../../src/utils/crypto.utils.js";
 import * as AuthError from "../../src/errors/auth.errors.js";
 import * as PasswordResetService from "../../src/services/passwordReset.service.js";
+import { hashPassword } from "../../src/utils/password.utils.js";
+import { revokeAllTokensForUser } from "../../src/repositories/refreshtoken.repository.js";
 
 vi.mock("../../src/repositories/user.repository.js", () => ({
   findByEmail: vi.fn(),
+  updatePassword: vi.fn(),
 }));
 vi.mock("../../src/repositories/passwordResetToken.repository.js", () => ({
   create: vi.fn(),
@@ -15,12 +18,15 @@ vi.mock("../../src/repositories/passwordResetToken.repository.js", () => ({
   markUsed: vi.fn(),
   invalidateAllForUser: vi.fn(),
 }));
-vi.mock("../../src/services/token.repository.js", () => ({
+vi.mock("../../src/repositories/refreshtoken.repository.js", () => ({
   revokeAllTokensForUser: vi.fn(),
 }));
 vi.mock("../../src/utils/crypto.utils.js", () => ({
   generateTokenHash: vi.fn(),
   generateRawToken: vi.fn(),
+}));
+vi.mock("../../src/utils/password.utils.js", () => ({
+  hashPassword: vi.fn(),
 }));
 
 describe("passwordReset.service", () => {
@@ -36,7 +42,7 @@ describe("passwordReset.service", () => {
         PasswordResetService.requestPasswordReset("not-Stored@email.com"),
       ).resolves.toBeUndefined();
     });
-    test.only("invalidates previous reset tokens, and creates a new entry ", async () => {
+    test("invalidates previous reset tokens, and creates a new entry ", async () => {
       //Arrange
       UserRepository.findByEmail.mockResolvedValue({
         id: "user-id-1",
@@ -59,18 +65,65 @@ describe("passwordReset.service", () => {
       expect(PasswordResetTokenRepository.create).not.toHaveBeenCalledWith({
         tokenHash: "reset-token",
       });
-      
     });
   });
 
   describe("resetPassword", () => {
-    test.todo("throw unauthorized if the token is not present", () => {});
-    test.todo("throw unauthorized if the token is used", () => {});
-    test.todo("throw unauthorized if the token is expired", () => {});
-    test.todo(
-      "create a new passwordHash, update user password, mark token as used and revokes all session on success",
-      () => {},
-    );
+    test("throw unauthorized if the token is not present", async () => {
+      PasswordResetTokenRepository.findByHash.mockResolvedValue(null);
+
+      await expect(
+        PasswordResetService.resetPassword("no-token", "user@email.com"),
+      ).rejects.toThrow(AuthError.UnauthorizedError);
+      expect(UserRepository.updatePassword).not.toHaveBeenCalled();
+      expect(PasswordResetTokenRepository.markUsed).not.toHaveBeenCalled();
+    });
+    test("throw unauthorized if the token is used", async () => {
+      PasswordResetTokenRepository.findByHash.mockResolvedValue({
+        used: true,
+      });
+      await expect(
+        PasswordResetService.resetPassword("used-token", "user@email.com"),
+      ).rejects.toThrow(AuthError.UnauthorizedError);
+    });
+    test("throw unauthorized if the token is expired", async () => {
+      PasswordResetTokenRepository.findByHash.mockResolvedValue({
+        expiresAt: new Date(Date.now() - 10000),
+      });
+      await expect(
+        PasswordResetService.resetPassword("expired-token", "user@email.com"),
+      ).rejects.toThrow(AuthError.UnauthorizedError);
+    });
+    test("create a new passwordHash, update user password, mark token as used and revokes all session on success", async () => {
+      PasswordResetTokenRepository.findByHash.mockResolvedValue({
+        userId: "user-id-1",
+      });
+      hashPassword.mockResolvedValue("hashed-secret123");
+      PasswordResetTokenRepository.markUsed.mockResolvedValue(true);
+      UserRepository.updatePassword.mockResolvedValue({});
+      revokeAllTokensForUser.mockResolvedValue({});
+      CryptoUtils.generateTokenHash.mockResolvedValue("valid-token-hashed");
+      //Act
+      const passwordResetArgs = {
+        rawToken: "valid-token",
+        newPassword: "secret123",
+      };
+      await PasswordResetService.resetPassword(passwordResetArgs);
+
+      //Assertions
+      expect(PasswordResetTokenRepository.findByHash).toHaveBeenCalledWith(
+        "valid-token-hashed",
+      );
+      expect(hashPassword).toHaveBeenCalledWith("secret123");
+      expect(UserRepository.updatePassword).toHaveBeenCalledWith({
+        userId: "user-id-1",
+        newPasswordHash: "hashed-secret123",
+      });
+      expect(PasswordResetTokenRepository.markUsed).toHaveBeenCalledWith(
+        "valid-token-hashed",
+      );
+      expect(revokeAllTokensForUser).toHaveBeenCalledWith("user-id-1");
+    });
   });
 
   //Mother test

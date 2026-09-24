@@ -1,4 +1,4 @@
-import prisma from "../config/db.js";
+import { prisma } from "../config/db.js";
 
 export const create = async ({ tokenHash, userId, expiresAt }) => {
   return await prisma.passwordResetToken.create({
@@ -9,7 +9,7 @@ export const create = async ({ tokenHash, userId, expiresAt }) => {
 export const findByHash = async (tokenHash) => {
   return await prisma.passwordResetToken.findUnique({
     where: { tokenHash },
-    select: { userId: true },
+    // select: { userId: true }, not retrieving the data it validates. We need the existingrawToken
   });
 };
 

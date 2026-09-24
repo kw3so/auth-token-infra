@@ -3,12 +3,13 @@ import * as userRepository from "../repositories/user.repository.js";
 import * as cryptoUtils from "../utils/crypto.utils.js";
 import * as AuthError from "../errors/auth.errors.js";
 import { revokeAllTokensForUser } from "../repositories/refreshtoken.repository.js";
+import { hashPassword } from "../utils/password.utils.js";
+import * as ConfigEnv from "../config/config.env.js";
 
 export const requestPasswordReset = async (email) => {
-  const passwordResetExpiresInMin = parseInt(
-    process.env.PASSWORD_RESET_EXPIRES_IN_MINUTES,
-    10,
-  );
+  const PASSWORD_RESET_TTL_MS =
+    ConfigEnv.PASSWORD_RESET_TTL_MINUTES * 60 * 1000;
+
   const user = await userRepository.findByEmail(email);
 
   //Decision, we always respond as if request successful, no throw
@@ -16,39 +17,39 @@ export const requestPasswordReset = async (email) => {
     return;
   }
 
+  const { password: _pw, ...safeUser } = user; //Destructure after check if user is returned.
+
   //Invalidate all the resetTokens
-  await passwordResetTokenRepository.invalidateAllForUser(user.id);
+  await passwordResetTokenRepository.invalidateAllForUser(safeUser.id);
 
   //gen a raw token
-  const rawToken = cryptoUtils.generateRawToken();
+  const resetToken = cryptoUtils.generateRawToken();
   // Hash token
-  const rawTokenHash = await cryptoUtils.generateTokenHash(rawToken);
+  const resetTokenHash = await cryptoUtils.generateTokenHash(resetToken);
   //expires in
-  const expiresAt = new Date(
-    Date.now() + passwordResetExpiresInMin * 60 * 1000,
-  );
+  const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
 
   //Store the token generated
   await passwordResetTokenRepository.create({
-    tokenHash: rawTokenHash,
-    userId: user.id,
+    tokenHash: resetTokenHash,
+    userId: safeUser.id,
     expiresAt,
   });
 
   //setup the reset password email
-  const resetUrl = `${process.env.appUrl}/reset-password?token=${rawToken}`;
-  console.log(user.email, resetUrl); //A service to send the email
+  const resetUrl = `${ConfigEnv.APP_URL}/reset-password?token=${resetToken}`;
+  console.log(safeUser.email, resetUrl); //A service to send the email
 };
 
 export const resetPassword = async ({ rawToken, newPassword }) => {
   const rawTokenHash = await cryptoUtils.generateTokenHash(rawToken);
-  const existingRawToken =
+  const existingResetToken =
     await passwordResetTokenRepository.findByHash(rawTokenHash);
 
   if (
-    !existingRawToken ||
-    existingRawToken.used ||
-    existingRawToken.expiresAt < new Date()
+    !existingResetToken ||
+    existingResetToken.used ||
+    existingResetToken.expiresAt < new Date()
   ) {
     throw new AuthError.UnauthorizedError(
       " Invalid or expired password reset token",
@@ -56,10 +57,13 @@ export const resetPassword = async ({ rawToken, newPassword }) => {
   }
 
   //Update user password and mark token as used
-  const newPasswordHash = await cryptoUtils.generateTokenHash(newPassword);
-  await userRepository.updatePassword(existingRawToken.userId, newPasswordHash);
+  const newPasswordHash = await hashPassword(newPassword);
+  await userRepository.updatePassword({
+    userId: existingResetToken.userId,
+    newPasswordHash,
+  });
   await passwordResetTokenRepository.markUsed(rawTokenHash);
 
   //Revoke all tokens after user resets password
-  await revokeAllTokensForUser(existingRawToken.userId);
+  await revokeAllTokensForUser(existingResetToken.userId);
 };

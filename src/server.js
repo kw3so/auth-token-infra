@@ -1,8 +1,9 @@
 import "dotenv/config";
 import app from "./app.js";
 import { connectDB, disconnectDB, prisma } from "./config/db.js";
+import * as ConfigEnv from "./config/config.env.js";
 
-const PORT = process.env.PORT || 3003;
+const PORT = ConfigEnv.PORT || 3003;
 const SHUTDOWN_TIMEOUT_MS = 10000;
 
 let server;

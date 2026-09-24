@@ -27,7 +27,7 @@ describe("auth.service", () => {
   });
 
   describe("register", () => {
-    test("throw ConflictError if email is used", () => {
+    test("throw ConflictError if email is used", async () => {
       userRepository.findByEmailOrName.mockResolvedValue({
         username: "existing-user",
         email: "existing-user@email.com",
@@ -38,12 +38,12 @@ describe("auth.service", () => {
         email: "existing-user@email.com",
         password: "secret123",
       };
-      expect(authService.registerService(newUser)).rejects.toThrow(
+      await expect(authService.registerService(newUser)).rejects.toThrow(
         authError.ConflictError,
       );
     });
 
-    test("throw ConflictError if username is used", () => {
+    test("throw ConflictError if username is used", async () => {
       userRepository.findByEmailOrName.mockResolvedValue({
         username: "existing-user",
         email: "existing-user@email.com",
@@ -54,7 +54,7 @@ describe("auth.service", () => {
         email: "new-user@email.com",
         pasword: "secret123",
       };
-      expect(authService.registerService(newUser)).rejects.toThrow(
+      await expect(authService.registerService(newUser)).rejects.toThrow(
         authError.ConflictError,
       );
     });

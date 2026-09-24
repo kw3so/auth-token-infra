@@ -5,16 +5,27 @@ import {
   refreshService,
   registerService,
 } from "../services/auth.service.js";
+import * as ConfigEnv from "../config/config.env.js";
 
 const setRefreshTokenCookie = ({ res, token }) => {
-  const refreshExpiration = parseInt(process.env.REFRESH_EXPIRES_IN, 10);
-  res.cookie("refreshToken", token, {
-    httpOnly: true,
-    secure: true,
-    // sameSite: "strict",
-    maxAge: refreshExpiration * 24 * 60 * 60 * 1000,
-    path: "/api/auth",
-  });
+  const refreshTokenTTLMs =
+    ConfigEnv.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000;
+
+  if (ConfigEnv.NODE_ENV === "production") {
+    res.cookie("refreshToken", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: refreshTokenTTLMs,
+      path: "/api/auth",
+    });
+  } else {
+    res.cookie("refreshToken", token, {
+      httpOnly: true,
+      maxAge: refreshTokenTTLMs,
+      path: "/api/auth",
+    });
+  }
 };
 
 const clearRefreshTokenCookie = (res) => {
@@ -36,8 +47,8 @@ export const registerController = async (req, res, next) => {
       username,
       phoneNumber,
       email,
-      password,}
-    );
+      password,
+    });
     setRefreshTokenCookie({ res, token: refreshToken });
     res.status(201).json({ user, accessToken });
   } catch (err) {
@@ -51,10 +62,10 @@ export const loginController = async (req, res, next) => {
     if (!email || !password) {
       throw new ValidationError("Provide all required fields");
     }
-    const { user, accessToken, refreshToken } = await loginService(
+    const { user, accessToken, refreshToken } = await loginService({
       email,
       password,
-    );
+    });
     setRefreshTokenCookie({ res, token: refreshToken });
     res.status(200).json({ user, accessToken });
   } catch (err) {

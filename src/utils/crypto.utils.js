@@ -1,12 +1,13 @@
 import crypto from "crypto";
 import * as AuthError from "../errors/auth.errors.js"
+import { REFRESH_TOKEN_PEPPER } from "../config/config.env.js";
 
 export const generateRawToken = () => {
   return crypto.randomBytes(64).toString("hex");
 };
 
 export const generateTokenHash = (rawToken) => {
-  const pepper = process.env.REFRESH_TOKEN_PEPPER;
+  const pepper = REFRESH_TOKEN_PEPPER
   // if (!rawToken) {
   //   throw new AuthError.ValidationError("No token present")
   // }

@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
+import * as ConfigEnv from "../config/config.env.js";
 
-const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS, 10);
+const SALT_ROUNDS = ConfigEnv.SALT_ROUNDS
 
 export const hashPassword = async (plainTextPassword) => {
   return await bcrypt.hash(plainTextPassword, SALT_ROUNDS);

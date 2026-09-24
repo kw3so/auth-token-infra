@@ -5,13 +5,14 @@ import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/auth.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { CORS_ORIGIN } from "./config/config.env.js";
 
 const app = express();
 //use middleware
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: CORS_ORIGIN,
     credentials: true,
   }),
 );
