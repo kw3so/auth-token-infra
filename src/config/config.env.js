@@ -14,11 +14,12 @@ export const REFRESH_TOKEN_TTL_DAYS = parseInt(
   10,
 );
 // - authController,
-export const SALT_ROUNDS = process.env.SALT_ROUNDS;
+export const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS);
 export const PASSWORD_RESET_TTL_MINUTES =
   process.env.PASSWORD_RESET_TTL_MINUTES;
 export const AUTH_RATE_LIMIT_WINDOW_MINUTES =
   process.env.AUTH_RATE_LIMIT_WINDOW_MINUTES;
 export const AUTH_RATE_LIMIT_MAX = process.env.AUTH_RATE_LIMIT_MAX;
 export const PORT = process.env.PORT;
+export const RESEND_KEY = process.env.RESEND_API_KEY;
 

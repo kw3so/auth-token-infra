@@ -7,7 +7,8 @@ export const forgotPassword = async (req, res, next) => {
     if (!email) {
       throw new ValidationError("Email is required");
     }
-    await PasswordResetService.requestPasswordReset(email);
+    const {data, error} = await PasswordResetService.requestPasswordReset(email);
+    
     res.status(200).json({
       message:
         "if an account with this email exists, a reset link has been sent",

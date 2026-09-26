@@ -5,6 +5,7 @@ import * as AuthError from "../errors/auth.errors.js";
 import { revokeAllTokensForUser } from "../repositories/refreshtoken.repository.js";
 import { hashPassword } from "../utils/password.utils.js";
 import * as ConfigEnv from "../config/config.env.js";
+import { emailService } from "./email.service.js";
 
 export const requestPasswordReset = async (email) => {
   const PASSWORD_RESET_TTL_MS =
@@ -37,8 +38,12 @@ export const requestPasswordReset = async (email) => {
   });
 
   //setup the reset password email
-  const resetUrl = `${ConfigEnv.APP_URL}/reset-password?token=${resetToken}`;
+  const resetUrl = `${ConfigEnv.APP_URL}/api/auth/reset-password?token=${resetToken}`;
   console.log(safeUser.email, resetUrl); //A service to send the email
+  return emailService({
+    receiver: safeUser.email,
+    message: resetUrl,
+  });
 };
 
 export const resetPassword = async ({ rawToken, newPassword }) => {

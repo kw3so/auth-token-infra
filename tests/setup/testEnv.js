@@ -12,3 +12,4 @@ process.env.AUTH_RATE_LIMIT_MAX = "5"; //making this smaller so we can quickly t
 
 //test auth routes
 process.env.REFRESH_TOKEN_TTL_DAYS=10
+process.env.RESEND_KEY = process.env.RESEND_API_KEY

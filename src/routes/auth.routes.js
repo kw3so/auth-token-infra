@@ -2,7 +2,7 @@ import express from "express";
 import * as AuthController from "../controllers/auth.controller.js";
 import * as RateLimiter from "../middleware/rateLimiter.js";
 import * as PasswordResetController from "../controllers/passwordReset.controller.js";
-
+import { authenticate } from "../middleware/authenticate.middleware.js";
 
 const router = express.Router();
 
@@ -11,11 +11,7 @@ router.post(
   RateLimiter.registerLimiter,
   AuthController.registerController,
 );
-router.post(
-  "/login",
-  RateLimiter.loginLimiter,
-  AuthController.loginController,
-);
+router.post("/login", RateLimiter.loginLimiter, AuthController.loginController);
 router.post("/refresh", AuthController.refreshController);
 router.post("/logout", AuthController.logoutController);
 
@@ -28,6 +24,6 @@ router.post(
 router.post(
   "/reset-password",
   RateLimiter.resetPasswordLimiter,
-  PasswordResetController.resetPassword
+  PasswordResetController.resetPassword,
 );
 export default router;
