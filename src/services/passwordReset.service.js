@@ -37,12 +37,11 @@ export const requestPasswordReset = async (email) => {
     expiresAt,
   });
 
-  //setup the reset password email
-  const resetUrl = `${ConfigEnv.APP_URL}/api/auth/reset-password?token=${resetToken}`;
+
  //A service to send the email
   return emailService({
     receiver: safeUser.email,
-    message: resetUrl,
+    resetToken
   });
 };
 

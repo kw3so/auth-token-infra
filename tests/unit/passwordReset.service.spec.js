@@ -7,6 +7,7 @@ import * as AuthError from "../../src/errors/auth.errors.js";
 import * as PasswordResetService from "../../src/services/passwordReset.service.js";
 import { hashPassword } from "../../src/utils/password.utils.js";
 import { revokeAllTokensForUser } from "../../src/repositories/refreshtoken.repository.js";
+import { emailService } from "../../src/services/email.service.js";
 
 vi.mock("../../src/repositories/user.repository.js", () => ({
   findByEmail: vi.fn(),
@@ -50,6 +51,7 @@ describe("passwordReset.service", () => {
       //Arrange
       UserRepository.findByEmail.mockResolvedValue({
         id: "user-id-1",
+        email: "user@email.com",
       });
       CryptoUtils.generateRawToken.mockReturnValue("reset-token");
       CryptoUtils.generateTokenHash.mockResolvedValue("reset-token-hash");
@@ -69,6 +71,7 @@ describe("passwordReset.service", () => {
       expect(PasswordResetTokenRepository.create).not.toHaveBeenCalledWith({
         tokenHash: "reset-token",
       });
+      expect(emailService).toHaveBeenCalled();
     });
   });
 
@@ -129,6 +132,4 @@ describe("passwordReset.service", () => {
       expect(revokeAllTokensForUser).toHaveBeenCalledWith("user-id-1");
     });
   });
-
-  //Mother test
 });
