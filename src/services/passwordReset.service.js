@@ -39,7 +39,7 @@ export const requestPasswordReset = async (email) => {
 
   //setup the reset password email
   const resetUrl = `${ConfigEnv.APP_URL}/api/auth/reset-password?token=${resetToken}`;
-  console.log(safeUser.email, resetUrl); //A service to send the email
+ //A service to send the email
   return emailService({
     receiver: safeUser.email,
     message: resetUrl,

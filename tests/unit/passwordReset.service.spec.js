@@ -28,6 +28,9 @@ vi.mock("../../src/utils/crypto.utils.js", () => ({
 vi.mock("../../src/utils/password.utils.js", () => ({
   hashPassword: vi.fn(),
 }));
+vi.mock("../../src/services/email.service.js", () => ({
+  emailService: vi.fn().mockResolvedValue(true),
+}));
 
 describe("passwordReset.service", () => {
   beforeEach(() => {
@@ -42,6 +45,7 @@ describe("passwordReset.service", () => {
         PasswordResetService.requestPasswordReset("not-Stored@email.com"),
       ).resolves.toBeUndefined();
     });
+
     test("invalidates previous reset tokens, and creates a new entry ", async () => {
       //Arrange
       UserRepository.findByEmail.mockResolvedValue({

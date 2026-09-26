@@ -3,6 +3,7 @@ import app from "../../src/app.js";
 import * as AuthService from "../../src/services/auth.service.js";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { UnauthorizedError } from "../../src/errors/auth.errors.js";
+import { emailService } from "../../src/services/email.service.js";
 
 vi.mock("../../src/services/auth.service.js", () => ({
   registerService: vi.fn(),
@@ -10,6 +11,10 @@ vi.mock("../../src/services/auth.service.js", () => ({
   refreshService: vi.fn(),
   logoutService: vi.fn(),
 }));
+
+vi.mock("../../src/services/email.service.js", ()=>({
+  emailService: vi.fn().mockResolvedValue(true),
+}))
 
 describe("Auth routes integration testing", () => {
   beforeEach(() => {
